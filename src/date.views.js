@@ -190,7 +190,6 @@ function date_views_exposed_filter_build_widget(form, form_state, element, filte
  */
 function date_views_exposed_filter_build_select(form, form_state, element, filter, field) {
   try {
-    console.log(element, 'element');
     var today = new Date();
     var yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     var last_week = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (7 + today.getDay()));
