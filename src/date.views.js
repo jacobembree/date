@@ -201,6 +201,7 @@ function date_views_exposed_filter_build_select(form, form_state, element, filte
     var last_year_str = date('Y-m-d H:i:s', last_year)
     element.options = {
     }
+    element.options[""] = "- " + t('Any') + " -";
     element.options[date('Y-m-d H:i:s', yesterday)] = t('Yesterday');
     element.options[date('Y-m-d H:i:s', last_week)] = t('Last Week');
     element.options[date('Y-m-d H:i:s', last_month)] = t('Last Month');
