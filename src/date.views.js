@@ -26,137 +26,20 @@ function date_views_exposed_filter(form, form_state, element, filter, field) {
       }
     }
 
-    // Convert the item into a hidden field that will have its value populated dynamically by the widget. We'll store
-    // the value (and potential value2) within the element using this format: YYYY-MM-DD HH:MM:SS|YYYY-MM-DD HH:MM:SS
-    element.type = 'hidden';
-
     element.attributes = {
       name: filter.definition.field
     };
 
-    // Minute increment.
-    var increment = 1;
-
-    var value_set = false;
-    var value2_set = false;
-
     // Grab the current date.
     var date = new Date();
 
-    // Get the item date and offset, if any.
-    var date_and_offset = _date_get_item_and_offset(items, delta, 'value', value_set, value2_set, field);
-    var item_date = date_and_offset.item_date;
-    var offset = date_and_offset.offset;
+    if (!empty(drupalgap.settings.date) && !empty(drupalgap.settings.date.widget) && drupalgap.settings.date.widget == 'simplified-select') {
+      date_views_exposed_filter_build_select(form, form_state, element, filter, field);
+    }
+    else {
+      date_views_exposed_filter_build_widget(form, form_state, element, filter, field, date);
+    }
 
-    var military = true;
-
-    // For each grain of the granularity, add it as a child to the form element. As we
-    // build the child widgets we'll set them aside one by one that way we can present
-    // the inputs in a desirable order later at render time.
-    var _widget_year = null;
-    var _widget_month = null;
-    var _widget_day = null;
-    var _widget_hour = null;
-    var _widget_minute = null;
-    var _widget_second = null;
-    var _widget_ampm = null;
-
-    // Build a fake instance for widget building.
-    var instance = {widget: {settings: {year_range: filter.options.year_range}}};
-
-    // Supported grains.  Do not build widgets for grains lower than the filter
-    // wants.
-    var grains = ['second', 'minute', 'hour', 'day', 'month', 'year'];
-
-    $.each(field.settings.granularity, function(grain, value) {
-      if (value && grains.indexOf(grain) >= grains.indexOf(filter.options.granularity)) {
-
-        // Build a unique html element id for this select list. Set up an
-        // onclick handler and send it the id of the hidden input that will
-        // hold the date value.
-        var id = element.options.attributes.id
-        id += '-' + grain;
-        var attributes = {
-          id: id,
-          onchange: "date_select_onchange(this, '" + element.options.attributes.id + "', '" + grain + "', " + military + ", " + increment + ", " + offset + ")"
-        };
-        switch (grain) {
-
-          // YEAR
-          case 'year':
-            _widget_year = _date_grain_widget_year(date, instance, attributes);
-            break;
-
-          // MONTH
-          case 'month':
-            _widget_month = _date_grain_widget_month(date, instance, attributes);
-            break;
-
-          // DAY
-          case 'day':
-            _widget_day = _date_grain_widget_day(date, instance, attributes);
-            break;
-
-          // HOUR
-          case 'hour':
-            _widget_hour = _date_grain_widget_hour(date, instance, attributes, false, false, null, military);
-
-            // Add an am/pm selector if we're not in military time. Hang onto the old value so we
-            // can prevent the +/- 12 adjustment from happening if the user selects the same
-            // thing twice.
-            if (!military) {
-              var onclick = attributes.onchange.replace(grain, 'ampm') +
-                  '; this.date_ampm_old_value = this.value;';
-              var ampm_value =  parseInt(item_date.getHours()) < 12 ? 'am' : 'pm';
-              _widget_ampm = {
-                type: 'select',
-                attributes: {
-                  id: attributes.id.replace(grain, 'ampm'),
-                  onclick: onclick,
-                  date_ampm_original_value: ampm_value
-                },
-                value: ampm_value,
-                options: {
-                  am: 'am',
-                  pm: 'pm'
-                }
-              };
-            }
-            break;
-
-          // MINUTE
-          case 'minute':
-            _widget_minute = _date_grain_widget_minute(date, instance, attributes, false, false, null, false, 1);
-            break;
-
-          // SECOND
-          case 'second':
-            _widget_second = _date_grain_widget_second(date, instance, attributes);
-            break;
-
-          default:
-            console.log('WARNING: date_field_widget_form() - unsupported grain! (' + grain + ')');
-            break;
-        }
-      }
-    });
-
-    var items = {0: element};
-    var delta = 0;
-    //Wrap the widget with some better UX.
-    _date_grain_widgets_ux_wrap(
-        items,
-        delta,
-        _widget_year,
-        _widget_month,
-        _widget_day,
-        _widget_hour,
-        _widget_minute,
-        _widget_second,
-        _widget_ampm
-    );
-
-    element = items[0];
     element.default_value = date_yyyy_mm_dd_hh_mm_ss(date_yyyy_mm_dd_hh_mm_ss_parts(date));
     element.value_callback = 'date_views_exposed_filter_value';
 
@@ -170,6 +53,161 @@ function date_views_exposed_filter(form, form_state, element, filter, field) {
     form['rename_elements'][element.attributes.name] = element.attributes.name + '[value][date]';
   }
   catch (error) { console.log('date_views_exposed_filter - ' + error); }
+}
+
+/**
+ * Builds a collection of select lists for a date filter.
+ */
+function date_views_exposed_filter_build_widget(form, form_state, element, filter, field, date) {
+  // Convert the item into a hidden field that will have its value populated dynamically by the widget. We'll store
+  // the value (and potential value2) within the element using this format: YYYY-MM-DD HH:MM:SS|YYYY-MM-DD HH:MM:SS
+  element.type = 'hidden';
+
+  // Minute increment.
+  var increment = 1;
+
+  var value_set = false;
+  var value2_set = false;
+
+  // Get the item date and offset, if any.
+  var date_and_offset = _date_get_item_and_offset(items, delta, 'value', value_set, value2_set, field);
+  var item_date = date_and_offset.item_date;
+  var offset = date_and_offset.offset;
+
+  var military = true;
+
+  var items = {0: element};
+  var delta = 0;
+  // For each grain of the granularity, add it as a child to the form element. As we
+  // build the child widgets we'll set them aside one by one that way we can present
+  // the inputs in a desirable order later at render time.
+  var _widget_year = null;
+  var _widget_month = null;
+  var _widget_day = null;
+  var _widget_hour = null;
+  var _widget_minute = null;
+  var _widget_second = null;
+  var _widget_ampm = null;
+
+  // Build a fake instance for widget building.
+  var instance = {widget: {settings: {year_range: filter.options.year_range}}};
+
+  // Supported grains.  Do not build widgets for grains lower than the filter
+  // wants.
+  var grains = ['second', 'minute', 'hour', 'day', 'month', 'year'];
+
+  $.each(field.settings.granularity, function(grain, value) {
+    if (value && grains.indexOf(grain) >= grains.indexOf(filter.options.granularity)) {
+
+      // Build a unique html element id for this select list. Set up an
+      // onclick handler and send it the id of the hidden input that will
+      // hold the date value.
+      var id = element.options.attributes.id
+      id += '-' + grain;
+      var attributes = {
+        id: id,
+        onchange: "date_select_onchange(this, '" + element.options.attributes.id + "', '" + grain + "', " + military + ", " + increment + ", " + offset + ")"
+      };
+      switch (grain) {
+
+        // YEAR
+        case 'year':
+          _widget_year = _date_grain_widget_year(date, instance, attributes);
+          break;
+
+        // MONTH
+        case 'month':
+          _widget_month = _date_grain_widget_month(date, instance, attributes);
+          break;
+
+        // DAY
+        case 'day':
+          _widget_day = _date_grain_widget_day(date, instance, attributes);
+          break;
+
+        // HOUR
+        case 'hour':
+          _widget_hour = _date_grain_widget_hour(date, instance, attributes, false, false, null, military);
+
+          // Add an am/pm selector if we're not in military time. Hang onto the old value so we
+          // can prevent the +/- 12 adjustment from happening if the user selects the same
+          // thing twice.
+          if (!military) {
+            var onclick = attributes.onchange.replace(grain, 'ampm') +
+                '; this.date_ampm_old_value = this.value;';
+            var ampm_value =  parseInt(item_date.getHours()) < 12 ? 'am' : 'pm';
+            _widget_ampm = {
+              type: 'select',
+              attributes: {
+                id: attributes.id.replace(grain, 'ampm'),
+                onclick: onclick,
+                date_ampm_original_value: ampm_value
+              },
+              value: ampm_value,
+              options: {
+                am: 'am',
+                pm: 'pm'
+              }
+            };
+          }
+          break;
+
+        // MINUTE
+        case 'minute':
+          _widget_minute = _date_grain_widget_minute(date, instance, attributes, false, false, null, false, 1);
+          break;
+
+        // SECOND
+        case 'second':
+          _widget_second = _date_grain_widget_second(date, instance, attributes);
+          break;
+
+        default:
+          console.log('WARNING: date_field_widget_form() - unsupported grain! (' + grain + ')');
+          break;
+      }
+    }
+  });
+
+  //Wrap the widget with some better UX.
+  _date_grain_widgets_ux_wrap(
+      items,
+      delta,
+      _widget_year,
+      _widget_month,
+      _widget_day,
+      _widget_hour,
+      _widget_minute,
+      _widget_second,
+      _widget_ampm
+  );
+
+  element = items[0];
+}
+
+/**
+ * Builds a simple select list for a date filter.
+ */
+function date_views_exposed_filter_build_select(form, form_state, element, filter, field) {
+  try {
+    var today = new Date();
+    var yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    var last_week = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (7 + today.getDay()));
+    var last_month = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    var last_year = new Date(today.getFullYear() - 1, 0, 1);
+    var yesterday_str = date('Y-m-d H:i:s', yesterday)
+    var last_week_str = date('Y-m-d H:i:s', last_week)
+    var last_month_str = date('Y-m-d H:i:s', last_month)
+    var last_year_str = date('Y-m-d H:i:s', last_year)
+    element.options = {
+    }
+    element.options[""] = "- " + t('Any') + " -";
+    element.options[date('Y-m-d H:i:s', yesterday)] = t('Yesterday');
+    element.options[date('Y-m-d H:i:s', last_week)] = t('Last Week');
+    element.options[date('Y-m-d H:i:s', last_month)] = t('Last Month');
+    element.options[date('Y-m-d H:i:s', last_year)] = t('Last Year');
+  }
+  catch (error) { console.log('date_views_exposed_filter_build_select - ' + error); }
 }
 
 /**
