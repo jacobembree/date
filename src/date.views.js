@@ -206,6 +206,11 @@ function date_views_exposed_filter_build_select(form, form_state, element, filte
     element.options[date('Y-m-d H:i:s', last_week)] = t('Last Week');
     element.options[date('Y-m-d H:i:s', last_month)] = t('Last Month');
     element.options[date('Y-m-d H:i:s', last_year)] = t('Last Year');
+
+    // Set the default as the date closest to the submitted value.
+    if (filter.value.value) {
+      element.value = filter.value.value.replace("T", " ");
+    }
   }
   catch (error) { console.log('date_views_exposed_filter_build_select - ' + error); }
 }
