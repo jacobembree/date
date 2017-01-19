@@ -195,10 +195,7 @@ function date_views_exposed_filter_build_select(form, form_state, element, filte
     var last_week = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (7 + today.getDay()));
     var last_month = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     var last_year = new Date(today.getFullYear() - 1, 0, 1);
-    var yesterday_str = date('Y-m-d H:i:s', yesterday)
-    var last_week_str = date('Y-m-d H:i:s', last_week)
-    var last_month_str = date('Y-m-d H:i:s', last_month)
-    var last_year_str = date('Y-m-d H:i:s', last_year)
+
     element.options = {
     }
     element.options[""] = "- " + t('Any') + " -";
