@@ -190,22 +190,24 @@ function date_views_exposed_filter_build_widget(form, form_state, element, filte
  */
 function date_views_exposed_filter_build_select(form, form_state, element, filter, field) {
   try {
-    console.log(element, 'element');
     var today = new Date();
     var yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     var last_week = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (7 + today.getDay()));
     var last_month = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     var last_year = new Date(today.getFullYear() - 1, 0, 1);
-    var yesterday_str = date('Y-m-d H:i:s', yesterday)
-    var last_week_str = date('Y-m-d H:i:s', last_week)
-    var last_month_str = date('Y-m-d H:i:s', last_month)
-    var last_year_str = date('Y-m-d H:i:s', last_year)
+
     element.options = {
     }
+    element.options[""] = '- ' + t('Any date') + ' -';
     element.options[date('Y-m-d H:i:s', yesterday)] = t('Yesterday');
     element.options[date('Y-m-d H:i:s', last_week)] = t('Last Week');
     element.options[date('Y-m-d H:i:s', last_month)] = t('Last Month');
     element.options[date('Y-m-d H:i:s', last_year)] = t('Last Year');
+
+    // Set the default as the date closest to the submitted value.
+    if (filter.value.value) {
+      element.value = filter.value.value.replace("T", " ");
+    }
   }
   catch (error) { console.log('date_views_exposed_filter_build_select - ' + error); }
 }
